@@ -30,6 +30,7 @@ function createTodo(text) {
   li.addEventListener("click", removeTodo);
   list.append(li);
 }
+
 function removeTodo() {
   this.removeEventListener("click", removeTodo);
   this.remove();
