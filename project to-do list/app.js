@@ -13,6 +13,7 @@ function getUserName(userId) {
   const user = users.find((u) => u.id === userId);
   return user.name;
 }
+
 function printTodo({ id, userId, title, completed }) {
   const li = document.createElement("li");
   li.className = "todo-item";
@@ -23,22 +24,38 @@ function printTodo({ id, userId, title, completed }) {
   const status = document.createElement("input");
   status.type = "checkbox";
   status.checked = completed;
+  status.addEventListener("change", handleTodoChange);
 
   const close = document.createElement("span");
   close.innerHTML = "&times;";
   close.className = "close";
+  close.addEventListener("click", handleClose);
 
   li.prepend(status);
   li.append(close);
 
   todoList.prepend(li);
 }
+
 function createUserOption(user) {
   const option = document.createElement("option");
   option.value = user.id;
   option.innerText = user.name;
 
   userSelect.append(option);
+}
+
+function removeTodo(todoId) {
+  todos = todos.filter((todo) => todo.id !== todo.id);
+  const todo = todoList.querySelector(`[data-id="${todoId}"]`);
+  todo.querySelector("input").removeEventListener("change", handleTodoChange);
+  todo.querySelector(".close").removeEventListener("click", handleClose);
+
+  todo.remove();
+}
+
+function alertError(error) {
+  alert(error.message);
 }
 
 // Event Logic
@@ -58,30 +75,97 @@ function handleSubmit(event) {
     completed: false,
   });
 }
+function handleTodoChange() {
+  const todoId = this.parentElement.dataset.id;
+  const completed = this.checked;
+
+  toggleTodoComplete(todoId, completed);
+}
+
+function handleClose() {
+  const todoId = this.parentElement.dataset.id;
+  deleteTodo(todoId);
+}
 
 // Async logic
 async function getAllTodos() {
-  const response = await fetch("https://jsonplaceholder.typicode.com/todos");
-  const data = await response.json();
+  try {
+    const response = await fetch(
+      "https://jsonplaceholder.typicode.com/todos?_limit=15",
+    );
+    const data = await response.json();
 
-  return data;
+    return data;
+  } catch (error) {
+    alertError(error);
+  }
 }
 
 async function getAllUsers() {
-  const response = await fetch("https://jsonplaceholder.typicode.com/users");
-  const data = await response.json();
+  try {
+    const response = await fetch(
+      "https://jsonplaceholder.typicode.com/users?_limit=5",
+    );
+    const data = await response.json();
 
-  return data;
+    return data;
+  } catch (error) {
+    alertError(error);
+  }
 }
 
 async function createTodo(todo) {
-  const response = await fetch("https://jsonplaceholder.typicode.com/todos", {
-    method: "POST",
-    body: JSON.stringify(todo),
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-  const newTodo = await response.json();
-  printTodo(newTodo);
+  try {
+    const response = await fetch("https://jsonplaceholder.typicode.com/todos", {
+      method: "POST",
+      body: JSON.stringify(todo),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    const newTodo = await response.json();
+    printTodo(newTodo);
+  } catch (error) {
+    alertError(error);
+  }
+}
+async function toggleTodoComplete(todoId, completed) {
+  try {
+    const response = await fetch(
+      `https://jsonplaceholder.typicode.com/todos/${todoId}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ completed }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to connect with the server! Please try later.");
+    }
+  } catch (error) {
+    alertError(error);
+  }
+}
+async function deleteTodo(todoId) {
+  try {
+    const response = await fetch(
+      `https://jsonplaceholder.typicode.com/todos/${todoId}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
+    if (response.ok) {
+      removeTodo(todoId);
+    } else {
+      throw new Error("Failed to connect with the server! Please try later.");
+    }
+  } catch (error) {
+    alertError(error);
+  }
 }
