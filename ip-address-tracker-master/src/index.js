@@ -44,7 +44,6 @@ function handleKey(e) {
 
 function setInfo(mapData) {
   const {lat, lng, country, region, timezone} = mapData.location;
-  console.log(mapData);
   ipInfo.innerText = mapData.ip;
   locationInfo.innerText = country + " " + region;
   timezoneInfo.innerText = timezone;
